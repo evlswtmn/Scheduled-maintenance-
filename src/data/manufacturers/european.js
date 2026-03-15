@@ -10,7 +10,7 @@
  * Maintenance type keys reference MaintenanceTypes defined in ../maintenanceTypes.js
  */
 
-module.exports = [
+export default [
   // ─── AUDI ──────────────────────────────────────────────────────────────────────
   {
     name: 'Audi',

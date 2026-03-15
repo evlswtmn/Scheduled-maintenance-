@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text } from 'react-native';
+import { Text, ActivityIndicator, View } from 'react-native';
 
 import { VehicleProvider } from './src/context/VehicleContext';
 import { Colors } from './src/theme';
+import { hasOnboarded } from './src/utils/storage';
+import { requestPermissions } from './src/utils/notifications';
 
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import VehicleSetupScreen from './src/screens/VehicleSetupScreen';
@@ -82,6 +84,25 @@ function MainTabs() {
 }
 
 export default function App() {
+  const [initialRoute, setInitialRoute] = useState(null);
+
+  useEffect(() => {
+    async function checkOnboarding() {
+      const onboarded = await hasOnboarded();
+      setInitialRoute(onboarded ? 'MainTabs' : 'Welcome');
+    }
+    checkOnboarding();
+    requestPermissions();
+  }, []);
+
+  if (!initialRoute) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
+        <ActivityIndicator size="large" color={Colors.accent} />
+      </View>
+    );
+  }
+
   return (
     <VehicleProvider>
       <NavigationContainer
@@ -99,6 +120,7 @@ export default function App() {
       >
         <StatusBar style="light" />
         <Stack.Navigator
+          initialRouteName={initialRoute}
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: Colors.background },

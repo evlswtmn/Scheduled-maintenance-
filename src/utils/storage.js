@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const STORAGE_KEYS = {
   VEHICLES: '@maintenance_tracker_vehicles',
   MAINTENANCE_LOG: '@maintenance_tracker_log',
-  SETTINGS: '@maintenance_tracker_settings',
   ONBOARDED: '@maintenance_tracker_onboarded',
 };
 
@@ -60,32 +59,6 @@ export async function loadMaintenanceLog() {
 }
 
 /**
- * Save app settings.
- */
-export async function saveSettings(settings) {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-    return true;
-  } catch (error) {
-    console.error('Error saving settings:', error);
-    return false;
-  }
-}
-
-/**
- * Load app settings.
- */
-export async function loadSettings() {
-  try {
-    const data = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
-    return data ? JSON.parse(data) : { notifications: true, units: 'miles' };
-  } catch (error) {
-    console.error('Error loading settings:', error);
-    return { notifications: true, units: 'miles' };
-  }
-}
-
-/**
  * Check if user has completed onboarding.
  */
 export async function hasOnboarded() {
@@ -107,29 +80,3 @@ export async function setOnboarded() {
     console.error('Error setting onboarded:', error);
   }
 }
-
-/**
- * Clear all app data (for reset/debug).
- */
-export async function clearAllData() {
-  try {
-    const keys = Object.values(STORAGE_KEYS);
-    await AsyncStorage.multiRemove(keys);
-    return true;
-  } catch (error) {
-    console.error('Error clearing data:', error);
-    return false;
-  }
-}
-
-export default {
-  saveVehicles,
-  loadVehicles,
-  saveMaintenanceLog,
-  loadMaintenanceLog,
-  saveSettings,
-  loadSettings,
-  hasOnboarded,
-  setOnboarded,
-  clearAllData,
-};

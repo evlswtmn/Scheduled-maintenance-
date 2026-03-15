@@ -3,10 +3,10 @@
  * Combines American, European, Japanese, and Korean vehicle data.
  */
 
-const americanManufacturers = require('./manufacturers/american');
-const europeanManufacturers = require('./manufacturers/european');
-const japaneseManufacturers = require('./manufacturers/japanese');
-const koreanManufacturers = require('./manufacturers/korean');
+import americanManufacturers from './manufacturers/american';
+import europeanManufacturers from './manufacturers/european';
+import japaneseManufacturers from './manufacturers/japanese';
+import koreanManufacturers from './manufacturers/korean';
 
 // Combine all manufacturers and sort alphabetically by name
 const allManufacturers = [
@@ -53,9 +53,3 @@ export function getScheduleForVehicle(make, model, year) {
 
   return manufacturer.schedules[matchingModel.scheduleGroup] || [];
 }
-
-export default {
-  getAllManufacturers,
-  getManufacturer,
-  getScheduleForVehicle,
-};

@@ -4,7 +4,7 @@
  * Subaru, and Toyota vehicles sold in the USA (2010-2026).
  */
 
-module.exports = [
+export default [
   // ──────────────────────────────────────────────
   // Acura
   // ──────────────────────────────────────────────

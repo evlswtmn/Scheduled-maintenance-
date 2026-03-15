@@ -18,16 +18,21 @@ import {
   getMaintenanceSummary,
   formatMileage,
 } from '../utils/maintenanceCalculator';
+import { checkAndNotify } from '../utils/notifications';
 import MaintenanceItem from '../components/MaintenanceItem';
+
+const MAX_MILEAGE = 500000;
 
 export default function DashboardScreen({ navigation }) {
   const {
     vehicles,
     maintenanceLog,
     selectedVehicleId,
+    selectedVehicle: ctxSelectedVehicle,
     selectVehicle,
     logService,
     updateMileage,
+    loading,
   } = useVehicles();
 
   const [showMileageUpdate, setShowMileageUpdate] = useState(false);
@@ -37,8 +42,8 @@ export default function DashboardScreen({ navigation }) {
   const manufacturers = useMemo(() => getAllManufacturers(), []);
 
   const selectedVehicle = useMemo(() => {
-    return vehicles.find((v) => v.id === selectedVehicleId) || vehicles[0] || null;
-  }, [vehicles, selectedVehicleId]);
+    return ctxSelectedVehicle || vehicles[0] || null;
+  }, [ctxSelectedVehicle, vehicles]);
 
   // Get maintenance schedule for selected vehicle
   const schedule = useMemo(() => {
@@ -96,18 +101,43 @@ export default function DashboardScreen({ navigation }) {
       Alert.alert('Invalid Mileage', 'Please enter a valid mileage number.');
       return;
     }
+    if (selectedVehicle && val < selectedVehicle.mileage) {
+      Alert.alert('Invalid Mileage', 'New mileage cannot be less than the current mileage. Odometers only go forward!');
+      return;
+    }
+    if (val > MAX_MILEAGE) {
+      Alert.alert('High Mileage', `${val.toLocaleString()} miles seems unusually high. Please verify.`);
+      return;
+    }
     if (selectedVehicle) {
       updateMileage(selectedVehicle.id, val);
       setShowMileageUpdate(false);
       setNewMileage('');
-    }
-  }, [newMileage, selectedVehicle, updateMileage]);
 
-  const onRefresh = useCallback(() => {
+      // Check for approaching maintenance and notify
+      const updatedVehicle = { ...selectedVehicle, mileage: val };
+      if (schedule.length) {
+        const upcoming = calculateUpcomingMaintenance(updatedVehicle, schedule, maintenanceLog);
+        checkAndNotify(updatedVehicle, upcoming);
+      }
+    }
+  }, [newMileage, selectedVehicle, updateMileage, schedule, maintenanceLog]);
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Force re-render by toggling refresh state
-    setTimeout(() => setRefreshing(false), 300);
+    // Re-load data from storage is handled by context; trigger a brief visual refresh
+    setTimeout(() => setRefreshing(false), 500);
   }, []);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!selectedVehicle) {
     return (
@@ -291,8 +321,8 @@ export default function DashboardScreen({ navigation }) {
                 onLogService={handleLogService}
                 onPress={() =>
                   navigation.navigate('MaintenanceDetail', {
-                    item,
-                    vehicle: selectedVehicle,
+                    vehicleId: selectedVehicle.id,
+                    maintenanceType: item.type,
                   })
                 }
               />
@@ -313,8 +343,8 @@ export default function DashboardScreen({ navigation }) {
                 onLogService={handleLogService}
                 onPress={() =>
                   navigation.navigate('MaintenanceDetail', {
-                    item,
-                    vehicle: selectedVehicle,
+                    vehicleId: selectedVehicle.id,
+                    maintenanceType: item.type,
                   })
                 }
               />
@@ -335,8 +365,8 @@ export default function DashboardScreen({ navigation }) {
                 onLogService={handleLogService}
                 onPress={() =>
                   navigation.navigate('MaintenanceDetail', {
-                    item,
-                    vehicle: selectedVehicle,
+                    vehicleId: selectedVehicle.id,
+                    maintenanceType: item.type,
                   })
                 }
               />

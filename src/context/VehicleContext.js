@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
 import { saveVehicles, loadVehicles, saveMaintenanceLog, loadMaintenanceLog } from '../utils/storage';
 
 const VehicleContext = createContext();
@@ -9,6 +9,10 @@ const initialState = {
   loading: true,
   selectedVehicleId: null,
 };
+
+function generateId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+}
 
 function vehicleReducer(state, action) {
   switch (action.type) {
@@ -107,31 +111,31 @@ export function VehicleProvider({ children }) {
     }
   }, [state.maintenanceLog, state.loading]);
 
-  const addVehicle = (vehicle) => {
+  const addVehicle = useCallback((vehicle) => {
     const newVehicle = {
       ...vehicle,
-      id: `vehicle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: generateId('vehicle'),
       addedDate: new Date().toISOString(),
     };
     dispatch({ type: 'ADD_VEHICLE', vehicle: newVehicle });
     return newVehicle;
-  };
+  }, []);
 
-  const updateVehicle = (vehicle) => {
+  const updateVehicle = useCallback((vehicle) => {
     dispatch({ type: 'UPDATE_VEHICLE', vehicle });
-  };
+  }, []);
 
-  const removeVehicle = (vehicleId) => {
+  const removeVehicle = useCallback((vehicleId) => {
     dispatch({ type: 'REMOVE_VEHICLE', vehicleId });
-  };
+  }, []);
 
-  const selectVehicle = (vehicleId) => {
+  const selectVehicle = useCallback((vehicleId) => {
     dispatch({ type: 'SELECT_VEHICLE', vehicleId });
-  };
+  }, []);
 
-  const logService = (vehicleId, serviceType, mileage, date, notes) => {
+  const logService = useCallback((vehicleId, serviceType, mileage, date, notes) => {
     const entry = {
-      id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: generateId('log'),
       vehicleId,
       type: serviceType,
       mileage,
@@ -140,28 +144,23 @@ export function VehicleProvider({ children }) {
     };
     dispatch({ type: 'LOG_SERVICE', entry });
     return entry;
-  };
+  }, []);
 
-  const removeLogEntry = (entryId) => {
+  const removeLogEntry = useCallback((entryId) => {
     dispatch({ type: 'REMOVE_LOG_ENTRY', entryId });
-  };
+  }, []);
 
-  const updateMileage = (vehicleId, mileage) => {
+  const updateMileage = useCallback((vehicleId, mileage) => {
     dispatch({ type: 'UPDATE_MILEAGE', vehicleId, mileage });
-  };
+  }, []);
 
-  const getSelectedVehicle = () => {
+  const selectedVehicle = useMemo(() => {
     return state.vehicles.find((v) => v.id === state.selectedVehicleId) || null;
-  };
+  }, [state.vehicles, state.selectedVehicleId]);
 
-  const getVehicleLog = (vehicleId) => {
-    return state.maintenanceLog
-      .filter((l) => l.vehicleId === vehicleId)
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
-  };
-
-  const value = {
+  const value = useMemo(() => ({
     ...state,
+    selectedVehicle,
     addVehicle,
     updateVehicle,
     removeVehicle,
@@ -169,9 +168,7 @@ export function VehicleProvider({ children }) {
     logService,
     removeLogEntry,
     updateMileage,
-    getSelectedVehicle,
-    getVehicleLog,
-  };
+  }), [state, selectedVehicle, addVehicle, updateVehicle, removeVehicle, selectVehicle, logService, removeLogEntry, updateMileage]);
 
   return <VehicleContext.Provider value={value}>{children}</VehicleContext.Provider>;
 }
@@ -183,5 +180,3 @@ export function useVehicles() {
   }
   return context;
 }
-
-export default VehicleContext;

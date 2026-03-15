@@ -6,7 +6,7 @@
  * manufacturer maintenance schedule documentation.
  */
 
-module.exports = [
+export default [
   // ──────────────────────────────────────────────
   // Genesis
   // ──────────────────────────────────────────────
