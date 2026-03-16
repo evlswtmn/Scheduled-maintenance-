@@ -4,7 +4,7 @@
  * Lincoln, Ram, and Tesla vehicles sold in the USA (2010-2026).
  */
 
-module.exports = [
+export default [
   // ──────────────────────────────────────────────
   // Buick
   // ──────────────────────────────────────────────

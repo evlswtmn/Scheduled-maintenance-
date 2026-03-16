@@ -12,6 +12,15 @@
       "resizeMode": "contain",
       "backgroundColor": "#0D1117"
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0D1117"
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.maintenancetracker.app"

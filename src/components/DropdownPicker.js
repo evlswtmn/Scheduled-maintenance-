@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -140,8 +140,6 @@ const styles = StyleSheet.create({
     ...Typography.captionBold,
     color: Colors.textSecondary,
     marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
   },
   selector: {
     flexDirection: 'row',

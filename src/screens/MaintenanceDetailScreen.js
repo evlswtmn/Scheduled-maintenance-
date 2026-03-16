@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,21 +10,48 @@ import {
 } from 'react-native';
 import { Colors, Typography } from '../theme';
 import { useVehicles } from '../context/VehicleContext';
-import { formatMileage, getStatusDisplay } from '../utils/maintenanceCalculator';
+import { getAllManufacturers } from '../data';
+import {
+  calculateUpcomingMaintenance,
+  formatMileage,
+  getStatusDisplay,
+} from '../utils/maintenanceCalculator';
 
 export default function MaintenanceDetailScreen({ route, navigation }) {
-  const { item, vehicle } = route.params;
-  const { logService, getVehicleLog } = useVehicles();
+  const { vehicleId, maintenanceType } = route.params;
+  const { vehicles, maintenanceLog, logService } = useVehicles();
 
-  const statusDisplay = getStatusDisplay(item.status);
-  const statusColor = Colors[statusDisplay.colorKey] || Colors.textSecondary;
-  const categoryColor = Colors[item.typeInfo?.category] || Colors.textSecondary;
+  const vehicle = useMemo(() => {
+    return vehicles.find((v) => v.id === vehicleId) || null;
+  }, [vehicles, vehicleId]);
 
-  // Get past service records for this type
-  const vehicleLog = getVehicleLog(vehicle.id);
-  const serviceHistory = vehicleLog.filter((l) => l.type === item.type);
+  const manufacturers = useMemo(() => getAllManufacturers(), []);
+
+  const item = useMemo(() => {
+    if (!vehicle) return null;
+    const manufacturer = manufacturers.find((m) => m.name === vehicle.make);
+    if (!manufacturer) return null;
+    const model = manufacturer.models.find(
+      (m) =>
+        m.name === vehicle.model &&
+        vehicle.year >= m.years.start &&
+        vehicle.year <= m.years.end
+    );
+    if (!model) return null;
+    const schedule = manufacturer.schedules[model.scheduleGroup] || [];
+    const upcoming = calculateUpcomingMaintenance(vehicle, schedule, maintenanceLog);
+    return upcoming.find((i) => i.type === maintenanceType) || null;
+  }, [vehicle, manufacturers, maintenanceLog, maintenanceType]);
+
+  const serviceHistory = useMemo(() => {
+    if (!vehicle) return [];
+    return maintenanceLog
+      .filter((l) => l.vehicleId === vehicle.id && l.type === maintenanceType)
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [vehicle, maintenanceLog, maintenanceType]);
 
   const handleLogService = useCallback(() => {
+    if (!vehicle || !item) return;
     Alert.alert(
       'Mark as Done',
       `Log "${item.typeInfo.name}" as completed at ${formatMileage(vehicle.mileage)} miles?`,
@@ -46,6 +73,23 @@ export default function MaintenanceDetailScreen({ route, navigation }) {
       ]
     );
   }, [item, vehicle, logService, navigation]);
+
+  if (!vehicle || !item) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={{ padding: 16 }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backText}>&lsaquo; Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.noDataText}>Maintenance data not available.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const statusDisplay = getStatusDisplay(item.status);
+  const statusColor = Colors[statusDisplay.colorKey] || Colors.textSecondary;
+  const categoryColor = Colors[item.typeInfo?.category] || Colors.textSecondary;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -215,6 +259,12 @@ const styles = StyleSheet.create({
     ...Typography.bodyBold,
     color: Colors.accent,
     fontSize: 18,
+  },
+  noDataText: {
+    ...Typography.body,
+    color: Colors.textMuted,
+    marginTop: 20,
+    textAlign: 'center',
   },
   card: {
     backgroundColor: Colors.card,

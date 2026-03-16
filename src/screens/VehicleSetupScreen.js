@@ -15,6 +15,9 @@ import { Colors, Typography } from '../theme';
 import DropdownPicker from '../components/DropdownPicker';
 import { useVehicles } from '../context/VehicleContext';
 import { getAllManufacturers } from '../data';
+import { setOnboarded } from '../utils/storage';
+
+const MAX_MILEAGE = 500000;
 
 export default function VehicleSetupScreen({ navigation, route }) {
   const { addVehicle } = useVehicles();
@@ -28,41 +31,34 @@ export default function VehicleSetupScreen({ navigation, route }) {
   const [mileage, setMileage] = useState('');
   const [nickname, setNickname] = useState('');
 
-  // Get list of makes (manufacturer names) alphabetically sorted
   const makeOptions = useMemo(() => {
     return manufacturers.map((m) => ({ label: m.name, value: m.name }));
   }, [manufacturers]);
 
-  // Get models for selected make
   const modelOptions = useMemo(() => {
     if (!selectedMake) return [];
     const manufacturer = manufacturers.find((m) => m.name === selectedMake);
     if (!manufacturer) return [];
-    // Get unique model names sorted alphabetically
     const uniqueModels = [...new Set(manufacturer.models.map((m) => m.name))].sort();
     return uniqueModels.map((name) => ({ label: name, value: name }));
   }, [selectedMake, manufacturers]);
 
-  // Get years for selected make + model
   const yearOptions = useMemo(() => {
     if (!selectedMake || !selectedModel) return [];
     const manufacturer = manufacturers.find((m) => m.name === selectedMake);
     if (!manufacturer) return [];
     const matchingModels = manufacturer.models.filter((m) => m.name === selectedModel);
-    // Gather all valid years from all matching model entries
     const years = new Set();
     matchingModels.forEach((m) => {
       for (let y = m.years.start; y <= m.years.end; y++) {
         years.add(y);
       }
     });
-    // Sort descending (newest first)
     return [...years]
       .sort((a, b) => b - a)
       .map((y) => ({ label: y.toString(), value: y.toString() }));
   }, [selectedMake, selectedModel, manufacturers]);
 
-  // Get drivetrains for selected make + model + year
   const drivetrainOptions = useMemo(() => {
     if (!selectedMake || !selectedModel || !selectedYear) return [];
     const manufacturer = manufacturers.find((m) => m.name === selectedMake);
@@ -74,6 +70,8 @@ export default function VehicleSetupScreen({ navigation, route }) {
     if (!matchingModel) return [];
     return matchingModel.drivetrains.map((d) => ({ label: getDrivetrainLabel(d), value: d }));
   }, [selectedMake, selectedModel, selectedYear, manufacturers]);
+
+  const isFormComplete = selectedMake && selectedModel && selectedYear && selectedDrivetrain && mileage.trim();
 
   const handleMakeChange = useCallback((value) => {
     setSelectedMake(value);
@@ -105,7 +103,22 @@ export default function VehicleSetupScreen({ navigation, route }) {
       Alert.alert('Invalid Mileage', 'Please enter a valid current mileage.');
       return;
     }
+    if (mileageNum > MAX_MILEAGE) {
+      Alert.alert(
+        'High Mileage',
+        `${mileageNum.toLocaleString()} miles seems unusually high. Are you sure?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Yes, Save', onPress: () => saveVehicle(mileageNum) },
+        ]
+      );
+      return;
+    }
 
+    saveVehicle(mileageNum);
+  }, [selectedMake, selectedModel, selectedYear, selectedDrivetrain, mileage, nickname, addVehicle, navigation, isInitialSetup]);
+
+  const saveVehicle = useCallback((mileageNum) => {
     const vehicle = {
       make: selectedMake,
       model: selectedModel,
@@ -116,6 +129,7 @@ export default function VehicleSetupScreen({ navigation, route }) {
     };
 
     addVehicle(vehicle);
+    setOnboarded();
 
     if (isInitialSetup) {
       navigation.reset({
@@ -125,7 +139,7 @@ export default function VehicleSetupScreen({ navigation, route }) {
     } else {
       navigation.goBack();
     }
-  }, [selectedMake, selectedModel, selectedYear, selectedDrivetrain, mileage, nickname, addVehicle, navigation, isInitialSetup]);
+  }, [selectedMake, selectedModel, selectedYear, selectedDrivetrain, nickname, addVehicle, navigation, isInitialSetup]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -183,7 +197,7 @@ export default function VehicleSetupScreen({ navigation, route }) {
           />
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>CURRENT MILEAGE</Text>
+            <Text style={styles.inputLabel}>Current Mileage</Text>
             <TextInput
               style={styles.textInput}
               placeholder="e.g. 45000"
@@ -196,7 +210,7 @@ export default function VehicleSetupScreen({ navigation, route }) {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>NICKNAME (OPTIONAL)</Text>
+            <Text style={styles.inputLabel}>Nickname (Optional)</Text>
             <TextInput
               style={styles.textInput}
               placeholder="e.g. My Daily Driver"
@@ -211,11 +225,10 @@ export default function VehicleSetupScreen({ navigation, route }) {
           <TouchableOpacity
             style={[
               styles.saveButton,
-              (!selectedMake || !selectedModel || !selectedYear || !selectedDrivetrain) &&
-                styles.saveButtonDisabled,
+              !isFormComplete && styles.saveButtonDisabled,
             ]}
-            onPress={handleSave}
-            activeOpacity={0.8}
+            onPress={isFormComplete ? handleSave : undefined}
+            activeOpacity={isFormComplete ? 0.8 : 1}
           >
             <Text style={styles.saveButtonText}>
               {isInitialSetup ? 'Get Started' : 'Add Vehicle'}
@@ -281,8 +294,6 @@ const styles = StyleSheet.create({
     ...Typography.captionBold,
     color: Colors.textSecondary,
     marginBottom: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
   },
   textInput: {
     backgroundColor: Colors.inputBackground,

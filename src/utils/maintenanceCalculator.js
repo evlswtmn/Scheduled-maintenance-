@@ -138,10 +138,3 @@ export function getStatusDisplay(status) {
       return { colorKey: 'textSecondary', label: 'Unknown', icon: 'help-circle' };
   }
 }
-
-export default {
-  calculateUpcomingMaintenance,
-  getMaintenanceSummary,
-  formatMileage,
-  getStatusDisplay,
-};
