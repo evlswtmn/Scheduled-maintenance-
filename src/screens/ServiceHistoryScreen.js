@@ -6,11 +6,11 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Colors, Typography } from '../theme';
 import { useVehicles } from '../context/VehicleContext';
 import MaintenanceTypes from '../data/maintenanceTypes';
+import { showAlert } from '../utils/alert';
 import { formatMileage } from '../utils/maintenanceCalculator';
 
 export default function ServiceHistoryScreen({ navigation }) {
@@ -45,7 +45,7 @@ export default function ServiceHistoryScreen({ navigation }) {
   const handleDeleteEntry = useCallback(
     (entry) => {
       const typeInfo = MaintenanceTypes[entry.type];
-      Alert.alert(
+      showAlert(
         'Delete Record',
         `Remove this "${typeInfo?.name || entry.type}" service record?`,
         [

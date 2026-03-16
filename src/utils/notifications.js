@@ -1,21 +1,30 @@
-import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const isWeb = Platform.OS === 'web';
 
 const NOTIFIED_KEY = '@maintenance_tracker_notified';
 const DEFAULT_THRESHOLD_MILES = 500;
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+// Only import and configure expo-notifications on native platforms
+let Notifications = null;
+if (!isWeb) {
+  Notifications = require('expo-notifications');
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 /**
  * Request notification permissions from the user.
+ * No-op on web.
  */
 export async function requestPermissions() {
+  if (isWeb || !Notifications) return;
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
     if (existing !== 'granted') {
@@ -28,8 +37,10 @@ export async function requestPermissions() {
 
 /**
  * Schedule an immediate local notification for a maintenance item.
+ * No-op on web.
  */
 export async function scheduleMaintenanceReminder(vehicleName, serviceName, milesUntilDue) {
+  if (isWeb || !Notifications) return;
   try {
     const body =
       milesUntilDue <= 0
@@ -77,12 +88,14 @@ async function saveNotifiedSet(set) {
  * Check upcoming maintenance items and send notifications for any that are
  * within the threshold. Won't re-notify for the same item until serviced
  * or the due-mileage changes (i.e. the user logs service).
+ * No-op on web.
  */
 export async function checkAndNotify(
   vehicle,
   upcomingItems,
   thresholdMiles = DEFAULT_THRESHOLD_MILES,
 ) {
+  if (isWeb || !Notifications) return;
   if (!vehicle || !upcomingItems || upcomingItems.length === 0) return;
 
   const notified = await loadNotifiedSet();

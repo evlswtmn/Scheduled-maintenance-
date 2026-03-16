@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, ActivityIndicator, View } from 'react-native';
+import { Text, ActivityIndicator, View, Platform, StyleSheet } from 'react-native';
 
 import { VehicleProvider } from './src/context/VehicleContext';
 import { Colors } from './src/theme';
@@ -103,7 +103,7 @@ export default function App() {
     );
   }
 
-  return (
+  const content = (
     <VehicleProvider>
       <NavigationContainer
         theme={{
@@ -143,4 +143,28 @@ export default function App() {
       </NavigationContainer>
     </VehicleProvider>
   );
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={webStyles.outer}>
+        <View style={webStyles.inner}>{content}</View>
+      </View>
+    );
+  }
+
+  return content;
 }
+
+const webStyles = StyleSheet.create({
+  outer: {
+    flex: 1,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+  },
+  inner: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 480,
+    backgroundColor: Colors.background,
+  },
+});
