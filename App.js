@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, ActivityIndicator, View, Platform, StyleSheet } from 'react-native';
 
@@ -17,7 +17,7 @@ import GarageScreen from './src/screens/GarageScreen';
 import MaintenanceDetailScreen from './src/screens/MaintenanceDetailScreen';
 import ServiceHistoryScreen from './src/screens/ServiceHistoryScreen';
 
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
 function TabIcon({ label, focused }) {
@@ -103,11 +103,37 @@ export default function App() {
     );
   }
 
+  const linking = Platform.OS === 'web' ? {
+    prefixes: [],
+    config: {
+      screens: {
+        Welcome: 'welcome',
+        VehicleSetup: 'vehicle-setup',
+        MainTabs: {
+          path: '',
+          screens: {
+            Dashboard: 'dashboard',
+            Garage: 'garage',
+            History: 'history',
+          },
+        },
+        MaintenanceDetail: 'maintenance-detail',
+      },
+    },
+  } : undefined;
+
   const content = (
     <VehicleProvider>
       <NavigationContainer
+        linking={linking}
         theme={{
           dark: true,
+          fonts: {
+            regular: { fontFamily: 'System', fontWeight: '400' },
+            medium: { fontFamily: 'System', fontWeight: '500' },
+            bold: { fontFamily: 'System', fontWeight: '700' },
+            heavy: { fontFamily: 'System', fontWeight: '800' },
+          },
           colors: {
             primary: Colors.accent,
             background: Colors.background,
@@ -123,21 +149,20 @@ export default function App() {
           initialRouteName={initialRoute}
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: Colors.background },
-            animation: 'slide_from_right',
+            cardStyle: { backgroundColor: Colors.background },
+            cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           }}
         >
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen
             name="VehicleSetup"
             component={VehicleSetupScreen}
-            options={{ animation: 'slide_from_bottom' }}
+            options={{ cardStyleInterpolator: CardStyleInterpolators.forVerticalIOS }}
           />
           <Stack.Screen name="MainTabs" component={MainTabs} />
           <Stack.Screen
             name="MaintenanceDetail"
             component={MaintenanceDetailScreen}
-            options={{ animation: 'slide_from_right' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

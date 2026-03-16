@@ -118,7 +118,7 @@ export default function VehicleSetupScreen({ navigation, route }) {
     saveVehicle(mileageNum);
   }, [selectedMake, selectedModel, selectedYear, selectedDrivetrain, mileage, nickname, addVehicle, navigation, isInitialSetup]);
 
-  const saveVehicle = useCallback((mileageNum) => {
+  const saveVehicle = useCallback(async (mileageNum) => {
     const vehicle = {
       make: selectedMake,
       model: selectedModel,
@@ -129,7 +129,7 @@ export default function VehicleSetupScreen({ navigation, route }) {
     };
 
     addVehicle(vehicle);
-    setOnboarded();
+    await setOnboarded();
 
     if (isInitialSetup) {
       navigation.reset({

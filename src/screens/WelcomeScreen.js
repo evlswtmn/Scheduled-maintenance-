@@ -37,7 +37,7 @@ export default function WelcomeScreen({ navigation }) {
         <View style={styles.bottomSection}>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => navigation.navigate('VehicleSetup')}
+            onPress={() => navigation.navigate('VehicleSetup', { initial: true })}
             activeOpacity={0.8}
           >
             <Text style={styles.primaryButtonText}>Add Your Vehicle</Text>
