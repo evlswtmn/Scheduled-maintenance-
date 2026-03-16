@@ -6,11 +6,11 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Colors, Typography } from '../theme';
 import { useVehicles } from '../context/VehicleContext';
 import { getAllManufacturers } from '../data';
+import { showAlert } from '../utils/alert';
 import {
   calculateUpcomingMaintenance,
   getMaintenanceSummary,
@@ -64,7 +64,7 @@ export default function GarageScreen({ navigation }) {
 
   const handleDeleteVehicle = useCallback(
     (vehicle) => {
-      Alert.alert(
+      showAlert(
         'Remove Vehicle',
         `Remove "${vehicle.nickname || `${vehicle.year} ${vehicle.make} ${vehicle.model}`}" from your garage? This will also delete its service history.`,
         [

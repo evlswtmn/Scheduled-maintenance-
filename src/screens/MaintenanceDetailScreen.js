@@ -6,7 +6,6 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { Colors, Typography } from '../theme';
 import { useVehicles } from '../context/VehicleContext';
@@ -16,6 +15,7 @@ import {
   formatMileage,
   getStatusDisplay,
 } from '../utils/maintenanceCalculator';
+import { showAlert } from '../utils/alert';
 
 export default function MaintenanceDetailScreen({ route, navigation }) {
   const { vehicleId, maintenanceType } = route.params;
@@ -52,7 +52,7 @@ export default function MaintenanceDetailScreen({ route, navigation }) {
 
   const handleLogService = useCallback(() => {
     if (!vehicle || !item) return;
-    Alert.alert(
+    showAlert(
       'Mark as Done',
       `Log "${item.typeInfo.name}" as completed at ${formatMileage(vehicle.mileage)} miles?`,
       [

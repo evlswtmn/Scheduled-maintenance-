@@ -7,7 +7,6 @@ import {
   TextInput,
   ScrollView,
   SafeAreaView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -16,6 +15,7 @@ import DropdownPicker from '../components/DropdownPicker';
 import { useVehicles } from '../context/VehicleContext';
 import { getAllManufacturers } from '../data';
 import { setOnboarded } from '../utils/storage';
+import { showAlert } from '../utils/alert';
 
 const MAX_MILEAGE = 500000;
 
@@ -96,15 +96,15 @@ export default function VehicleSetupScreen({ navigation, route }) {
     const mileageNum = parseInt(trimmedMileage, 10);
 
     if (!selectedMake || !selectedModel || !selectedYear || !selectedDrivetrain) {
-      Alert.alert('Missing Information', 'Please select your vehicle year, make, model, and drivetrain.');
+      showAlert('Missing Information', 'Please select your vehicle year, make, model, and drivetrain.');
       return;
     }
     if (!trimmedMileage || isNaN(mileageNum) || mileageNum < 0) {
-      Alert.alert('Invalid Mileage', 'Please enter a valid current mileage.');
+      showAlert('Invalid Mileage', 'Please enter a valid current mileage.');
       return;
     }
     if (mileageNum > MAX_MILEAGE) {
-      Alert.alert(
+      showAlert(
         'High Mileage',
         `${mileageNum.toLocaleString()} miles seems unusually high. Are you sure?`,
         [

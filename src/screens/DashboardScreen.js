@@ -7,12 +7,12 @@ import {
   SafeAreaView,
   TouchableOpacity,
   TextInput,
-  Alert,
   RefreshControl,
 } from 'react-native';
 import { Colors, Typography } from '../theme';
 import { useVehicles } from '../context/VehicleContext';
 import { getAllManufacturers } from '../data';
+import { showAlert } from '../utils/alert';
 import {
   calculateUpcomingMaintenance,
   getMaintenanceSummary,
@@ -72,7 +72,7 @@ export default function DashboardScreen({ navigation }) {
   const handleLogService = useCallback(
     (item) => {
       if (!selectedVehicle) return;
-      Alert.alert(
+      showAlert(
         'Mark as Done',
         `Log "${item.typeInfo.name}" as completed at ${formatMileage(selectedVehicle.mileage)} miles?`,
         [
@@ -98,15 +98,15 @@ export default function DashboardScreen({ navigation }) {
   const handleUpdateMileage = useCallback(() => {
     const val = parseInt(newMileage.replace(/,/g, ''), 10);
     if (isNaN(val) || val < 0) {
-      Alert.alert('Invalid Mileage', 'Please enter a valid mileage number.');
+      showAlert('Invalid Mileage', 'Please enter a valid mileage number.');
       return;
     }
     if (selectedVehicle && val < selectedVehicle.mileage) {
-      Alert.alert('Invalid Mileage', 'New mileage cannot be less than the current mileage. Odometers only go forward!');
+      showAlert('Invalid Mileage', 'New mileage cannot be less than the current mileage. Odometers only go forward!');
       return;
     }
     if (val > MAX_MILEAGE) {
-      Alert.alert('High Mileage', `${val.toLocaleString()} miles seems unusually high. Please verify.`);
+      showAlert('High Mileage', `${val.toLocaleString()} miles seems unusually high. Please verify.`);
       return;
     }
     if (selectedVehicle) {

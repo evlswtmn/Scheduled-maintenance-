@@ -34,7 +34,16 @@
       "package": "com.maintenancetracker.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Vehicle Maintenance Tracker",
+      "shortName": "Maint Tracker",
+      "description": "Track your vehicle's maintenance schedule with manufacturer-recommended service intervals.",
+      "backgroundColor": "#0D1117",
+      "themeColor": "#0D1117",
+      "bundler": "metro"
+    },
+    "experiments": {
+      "baseUrl": "/Scheduled-maintenance-"
     }
   }
 }
