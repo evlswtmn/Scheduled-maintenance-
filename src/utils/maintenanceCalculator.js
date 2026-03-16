@@ -66,13 +66,23 @@ export function calculateUpcomingMaintenance(vehicle, schedule, completedService
 }
 
 /**
- * Get the next interval point from zero that is >= current mileage.
- * For example, if interval is 7500 and mileage is 23000, next due is 30000.
+ * Get the next interval due point assuming service should have been done at
+ * every multiple of `interval` starting from 0.  When no service has ever been
+ * recorded, the vehicle is overdue once it passes any interval boundary.
+ *
+ * Examples (interval = 30 000):
+ *   mileage  5 000 → next due 30 000 (first interval not yet reached)
+ *   mileage 29 000 → next due 30 000
+ *   mileage 30 000 → next due 30 000 (exactly at boundary — due now)
+ *   mileage 62 000 → next due 60 000 (passed the 60k mark — overdue)
  */
 function getNextIntervalFromZero(currentMileage, interval) {
   if (interval <= 0) return currentMileage;
   const intervalsPassed = Math.floor(currentMileage / interval);
-  return (intervalsPassed + 1) * interval;
+  // Haven't reached the first interval yet — next due is the first one
+  if (intervalsPassed === 0) return interval;
+  // At or past an interval boundary — that boundary is (or was) the due point
+  return intervalsPassed * interval;
 }
 
 /**
