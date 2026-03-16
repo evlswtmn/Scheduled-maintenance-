@@ -80,3 +80,14 @@ export async function setOnboarded() {
     console.error('Error setting onboarded:', error);
   }
 }
+
+/**
+ * Clear onboarding flag so the welcome screen shows again.
+ */
+export async function clearOnboarded() {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEYS.ONBOARDED);
+  } catch (error) {
+    console.error('Error clearing onboarded:', error);
+  }
+}

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { Colors, Typography } from '../theme';
 import { useVehicles } from '../context/VehicleContext';
 import { getAllManufacturers } from '../data';
 import { showAlert } from '../utils/alert';
+import { clearOnboarded } from '../utils/storage';
 import {
   calculateUpcomingMaintenance,
   getMaintenanceSummary,
@@ -62,11 +64,24 @@ export default function GarageScreen({ navigation }) {
     [selectVehicle, navigation]
   );
 
+  // Track previous vehicle count to detect when last vehicle is removed
+  const prevVehicleCount = useRef(vehicles.length);
+  useEffect(() => {
+    if (prevVehicleCount.current > 0 && vehicles.length === 0) {
+      clearOnboarded();
+      navigation.dispatch(
+        CommonActions.reset({ index: 0, routes: [{ name: 'Welcome' }] })
+      );
+    }
+    prevVehicleCount.current = vehicles.length;
+  }, [vehicles.length, navigation]);
+
   const handleDeleteVehicle = useCallback(
     (vehicle) => {
+      const name = vehicle.nickname || `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
       showAlert(
         'Remove Vehicle',
-        `Remove "${vehicle.nickname || `${vehicle.year} ${vehicle.make} ${vehicle.model}`}" from your garage? This will also delete its service history.`,
+        `Are you sure you want to remove ${name}? This will also delete all service history for this vehicle.`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -114,24 +129,28 @@ export default function GarageScreen({ navigation }) {
           </View>
         ) : (
           vehicles.map((vehicle) => (
-            <TouchableOpacity
-              key={vehicle.id}
-              onLongPress={() => handleDeleteVehicle(vehicle)}
-              delayLongPress={600}
-            >
-              <VehicleCard
-                vehicle={vehicle}
-                summary={vehicleSummaries[vehicle.id]}
-                isSelected={vehicle.id === selectedVehicleId}
+            <View key={vehicle.id} style={styles.vehicleRow}>
+              <TouchableOpacity
+                style={styles.vehicleCardWrapper}
                 onPress={() => handleVehiclePress(vehicle)}
-              />
-            </TouchableOpacity>
+              >
+                <VehicleCard
+                  vehicle={vehicle}
+                  summary={vehicleSummaries[vehicle.id]}
+                  isSelected={vehicle.id === selectedVehicleId}
+                  onPress={() => handleVehiclePress(vehicle)}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDeleteVehicle(vehicle)}
+              >
+                <Text style={styles.deleteButtonText}>Remove</Text>
+              </TouchableOpacity>
+            </View>
           ))
         )}
 
-        {vehicles.length > 0 ? (
-          <Text style={styles.hint}>Long-press a vehicle to remove it</Text>
-        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -206,10 +225,25 @@ const styles = StyleSheet.create({
     ...Typography.bodyBold,
     color: Colors.buttonPrimaryText,
   },
-  hint: {
+  vehicleRow: {
+    marginBottom: 4,
+  },
+  vehicleCardWrapper: {
+    flex: 1,
+  },
+  deleteButton: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginTop: 2,
+    marginBottom: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.danger,
+  },
+  deleteButtonText: {
     ...Typography.small,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    marginTop: 8,
+    color: Colors.danger,
+    fontWeight: '600',
   },
 });
