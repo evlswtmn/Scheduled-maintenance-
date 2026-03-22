@@ -120,20 +120,26 @@ export default function MaintenanceDetailScreen({ route, navigation }) {
 
             {/* Interval Info */}
             <View style={styles.infoGrid}>
-              <InfoRow label="Service Interval" value={`Every ${formatMileage(item.intervalMiles)} miles`} />
+              {item.intervalMiles ? (
+                <InfoRow label="Service Interval" value={`Every ${formatMileage(item.intervalMiles)} miles`} />
+              ) : null}
               {item.intervalMonths ? (
                 <InfoRow label="Time Interval" value={`Every ${item.intervalMonths} months`} />
               ) : null}
-              <InfoRow
-                label="Next Due At"
-                value={`${formatMileage(item.nextDueMiles)} miles`}
-                valueColor={statusColor}
-              />
-              <InfoRow
-                label={item.milesUntilDue < 0 ? 'Overdue By' : 'Miles Remaining'}
-                value={`${formatMileage(Math.abs(item.milesUntilDue))} miles`}
-                valueColor={statusColor}
-              />
+              {item.intervalMiles ? (
+                <>
+                  <InfoRow
+                    label="Next Due At"
+                    value={`${formatMileage(item.nextDueMiles)} miles`}
+                    valueColor={statusColor}
+                  />
+                  <InfoRow
+                    label={item.milesUntilDue < 0 ? 'Overdue By' : 'Miles Remaining'}
+                    value={`${formatMileage(Math.abs(item.milesUntilDue))} miles`}
+                    valueColor={statusColor}
+                  />
+                </>
+              ) : null}
               <InfoRow
                 label="Current Odometer"
                 value={`${formatMileage(vehicle.mileage)} miles`}

@@ -26,12 +26,17 @@ export function calculateUpcomingMaintenance(vehicle, schedule, completedService
     // Find the last completed service of this type for this vehicle
     const lastService = getLastCompletedService(vehicle.id, item.type, completedServices);
 
-    // Calculate next due mileage
+    // Calculate next due mileage and status
     let nextDueMiles;
-    if (!item.intervalMiles) {
-      // Time-based only item (no mileage interval).
-      // If serviced, not due by mileage; if never serviced, treat as due now.
-      nextDueMiles = lastService ? mileage + 1 : mileage;
+    let status;
+
+    if (!item.intervalMiles && item.intervalMonths) {
+      // Time-based only item (e.g. brake fluid every 24 months).
+      // Status is determined by service date, not mileage.
+      const timeStatus = getTimeBasedStatus(lastService, item.intervalMonths);
+      status = timeStatus.status;
+      // For display: show current mileage as "next due" since there's no mileage target
+      nextDueMiles = mileage;
     } else if (lastService) {
       nextDueMiles = lastService.mileage + item.intervalMiles;
     } else {
@@ -42,8 +47,10 @@ export function calculateUpcomingMaintenance(vehicle, schedule, completedService
     // Calculate how many miles until due
     const milesUntilDue = nextDueMiles - mileage;
 
-    // Calculate urgency status
-    const status = getMaintenanceStatus(milesUntilDue, item.intervalMiles);
+    // For mileage-based items, calculate status from miles remaining
+    if (status === undefined) {
+      status = getMaintenanceStatus(milesUntilDue, item.intervalMiles);
+    }
 
     upcoming.push({
       ...item,
@@ -95,8 +102,47 @@ function getNextIntervalFromZero(currentMileage, interval) {
 function getLastCompletedService(vehicleId, serviceType, completedServices) {
   const matches = completedServices
     .filter((s) => s.vehicleId === vehicleId && s.type === serviceType)
-    .sort((a, b) => b.mileage - a.mileage);
+    .sort((a, b) => {
+      // Sort by date first (most recent), then by mileage as tiebreaker
+      const dateCompare = new Date(b.date) - new Date(a.date);
+      if (dateCompare !== 0) return dateCompare;
+      return b.mileage - a.mileage;
+    });
   return matches.length > 0 ? matches[0] : null;
+}
+
+/**
+ * Determine status for time-based-only maintenance items (no mileage interval).
+ * Compares the last service date + intervalMonths to today.
+ */
+function getTimeBasedStatus(lastService, intervalMonths) {
+  if (!lastService || !lastService.date) {
+    // Never serviced — treat as overdue
+    return { status: 'overdue' };
+  }
+
+  const serviceDate = new Date(lastService.date);
+  const now = new Date();
+
+  // Calculate when the next service is due
+  const nextDueDate = new Date(serviceDate);
+  nextDueDate.setMonth(nextDueDate.getMonth() + intervalMonths);
+
+  const msRemaining = nextDueDate.getTime() - now.getTime();
+  const daysRemaining = msRemaining / (1000 * 60 * 60 * 24);
+  const totalDays = intervalMonths * 30.44; // average days per month
+
+  if (daysRemaining <= 0) {
+    return { status: 'overdue' };
+  }
+
+  // "Due soon" if within 20% of the interval or within 30 days
+  const threshold = Math.max(totalDays * 0.2, 30);
+  if (daysRemaining <= threshold) {
+    return { status: 'due_soon' };
+  }
+
+  return { status: 'upcoming' };
 }
 
 /**

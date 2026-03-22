@@ -29,24 +29,35 @@ export default function MaintenanceItem({ item, onPress, onLogService }) {
         </View>
 
         <View style={styles.detailRow}>
-          <View style={styles.mileageInfo}>
-            <Text style={styles.label}>NEXT DUE</Text>
-            <Text style={styles.mileageValue}>
-              {formatMileage(item.nextDueMiles)} mi
-            </Text>
-          </View>
+          {!item.intervalMiles && item.intervalMonths ? (
+            <View style={styles.mileageInfo}>
+              <Text style={styles.label}>INTERVAL</Text>
+              <Text style={styles.mileageValue}>
+                Every {item.intervalMonths} months
+              </Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.mileageInfo}>
+                <Text style={styles.label}>NEXT DUE</Text>
+                <Text style={styles.mileageValue}>
+                  {formatMileage(item.nextDueMiles)} mi
+                </Text>
+              </View>
 
-          <View style={styles.mileageInfo}>
-            <Text style={styles.label}>
-              {item.milesUntilDue < 0 ? 'OVERDUE BY' : 'MILES TO GO'}
-            </Text>
-            <Text style={[styles.milesRemaining, { color: statusColor }]}>
-              {item.milesUntilDue < 0
-                ? formatMileage(Math.abs(item.milesUntilDue))
-                : formatMileage(item.milesUntilDue)}{' '}
-              mi
-            </Text>
-          </View>
+              <View style={styles.mileageInfo}>
+                <Text style={styles.label}>
+                  {item.milesUntilDue < 0 ? 'OVERDUE BY' : 'MILES TO GO'}
+                </Text>
+                <Text style={[styles.milesRemaining, { color: statusColor }]}>
+                  {item.milesUntilDue < 0
+                    ? formatMileage(Math.abs(item.milesUntilDue))
+                    : formatMileage(item.milesUntilDue)}{' '}
+                  mi
+                </Text>
+              </View>
+            </>
+          )}
         </View>
 
         {item.notes ? (
