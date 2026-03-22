@@ -28,7 +28,11 @@ export function calculateUpcomingMaintenance(vehicle, schedule, completedService
 
     // Calculate next due mileage
     let nextDueMiles;
-    if (lastService) {
+    if (!item.intervalMiles) {
+      // Time-based only item (no mileage interval).
+      // If serviced, not due by mileage; if never serviced, treat as due now.
+      nextDueMiles = lastService ? mileage + 1 : mileage;
+    } else if (lastService) {
       nextDueMiles = lastService.mileage + item.intervalMiles;
     } else {
       // No record of this service - calculate based on interval from 0
